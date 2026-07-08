@@ -1,10 +1,8 @@
-﻿using Dapper;
-using LoginCrudApi.Models;
+﻿using LoginCrudApi.Models;
+using LoginCrudApi.Repository;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Data.SqlClient;
 using Microsoft.IdentityModel.Tokens;
-using System.Data;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
@@ -15,39 +13,36 @@ namespace WebApplication1.Controllers
     [ApiController]
     public class HomeController : ControllerBase
     {
+        private readonly IHomeRepository _repository;
         private readonly IConfiguration _config;
 
-        public HomeController(IConfiguration config)
+        public HomeController(IHomeRepository repository,
+                              IConfiguration config)
         {
+            _repository = repository;
             _config = config;
         }
 
-        private SqlConnection GetConnection()
-        {
-            return new SqlConnection(_config.GetConnectionString("DefaultConnection"));
-        }
-
         [HttpPost("register")]
-        public IActionResult Register(LoginModel model)
+        public async Task<IActionResult> Register(LoginModel model)
         {
-            using var con = GetConnection();
+            var result = await _repository.RegisterAsync(model);
 
-            con.Execute("sp_Register",new{ model.Username,model.Password },commandType: CommandType.StoredProcedure);
+            if (result > 0)
+                return Ok("Registered Successfully");
 
-            return Ok("Registered Successfully");
+            return BadRequest("Registration Failed");
         }
 
         [HttpPost("login")]
-        public IActionResult Login(LoginModel model)
+        public async Task<IActionResult> Login(LoginModel model)
         {
-            using var con = GetConnection();
-
-            var user = con.QueryFirstOrDefault("sp_Login",new{model.Username,model.Password},commandType: CommandType.StoredProcedure);
+            var user = await _repository.LoginAsync(model);
 
             if (user == null)
                 return Unauthorized("Invalid Username or Password");
 
-            var claims = new[]
+            var claims = new List<Claim>
             {
                 new Claim(ClaimTypes.Name, model.Username)
             };
@@ -55,91 +50,85 @@ namespace WebApplication1.Controllers
             var key = new SymmetricSecurityKey(
                 Encoding.UTF8.GetBytes(_config["Jwt:Key"]));
 
+            var creds = new SigningCredentials(
+                key,
+                SecurityAlgorithms.HmacSha256);
+
             var token = new JwtSecurityToken(
                 claims: claims,
                 expires: DateTime.Now.AddHours(1),
-                signingCredentials: new SigningCredentials(
-                key, SecurityAlgorithms.HmacSha256)
-            );
+                signingCredentials: creds);
 
             return Ok(new
             {
-                token = new JwtSecurityTokenHandler().WriteToken(token)
+                Token = new JwtSecurityTokenHandler().WriteToken(token)
             });
         }
 
         [Authorize]
         [HttpGet("getall")]
-        public IActionResult GetAll()
+        public async Task<IActionResult> GetAll()
         {
-            using var con = GetConnection();
+            var users = await _repository.GetAllAsync();
 
-            var data = con.Query<User>("sp_GetAllUsers",commandType: CommandType.StoredProcedure);
+            return Ok(users);
+        }
 
-            return Ok(data);
+        //[Authorize]
+        [HttpGet("getall-byPagination")]
+        public async Task<IActionResult> GetAll(UserInputModel inputModel)
+        {
+            var users = await _repository.GetAllAsync(inputModel);
+
+            return Ok(users);
         }
 
         [Authorize]
         [HttpGet("getbyid/{id}")]
-        public IActionResult GetById(int id)
+        public async Task<IActionResult> GetById(int id)
         {
-            using var con = GetConnection();
+            var user = await _repository.GetByIdAsync(id);
 
-            var data = con.QueryFirstOrDefault<User>("sp_GetUserById",new { Id = id },commandType: CommandType.StoredProcedure);
-            return Ok(data);
+            if (user == null)
+                return NotFound("User Not Found");
+
+            return Ok(user);
         }
 
         [Authorize]
         [HttpPost("create")]
-        public IActionResult Create(User user)
+        public async Task<IActionResult> Create(User user)
         {
-            using var con = GetConnection();
+            var result = await _repository.CreateAsync(user);
 
-            con.Execute("sp_CreateUser",
-                new
-                {
-                    user.Name,
-                    user.Email,
-                    user.Salary
-                },
-                commandType: CommandType.StoredProcedure
-            );
+            if (result > 0)
+                return Ok("User Created Successfully");
 
-            return Ok("Inserted Successfully");
+            return BadRequest("Insert Failed");
         }
 
         [Authorize]
         [HttpPut("update")]
-        public IActionResult Update(User user)
+        public async Task<IActionResult> Update(User user)
         {
-            using var con = GetConnection();
+            var result = await _repository.UpdateAsync(user);
 
-            con.Execute("sp_UpdateUser",
-                new
-                {
-                    user.Id,
-                    user.Name,
-                    user.Email,
-                    user.Salary
-                },
-                commandType: CommandType.StoredProcedure
-            );
+            if (result > 0)
+                return Ok("Updated Successfully");
 
-            return Ok("Updated Successfully");
+            return BadRequest("Update Failed");
         }
 
         [Authorize]
         [HttpDelete("delete/{id}")]
-        public IActionResult Delete(int id)
+        public async Task<IActionResult> Delete(int id)
         {
-            using var con = GetConnection();
+            var result = await _repository.DeleteAsync(id);
 
-            con.Execute("sp_DeleteUser",new { Id = id },commandType: CommandType.StoredProcedure);
-            return Ok("Deleted Successfully");
+            if (result > 0)
+                return Ok("Deleted Successfully");
+
+            return BadRequest("Delete Failed");
         }
     }
-
-    
-
-   
 }

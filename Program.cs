@@ -1,3 +1,4 @@
+using LoginCrudApi.Repository;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
@@ -7,6 +8,8 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer(); // Required for endpoint discovery
 builder.Services.AddSwaggerGen(); // Registers the Swagger generator
+
+builder.Services.AddScoped<IHomeRepository, HomeRepository>();
 
 
 
