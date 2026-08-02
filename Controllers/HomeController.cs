@@ -1,7 +1,9 @@
 ﻿using LoginCrudApi.Models;
 using LoginCrudApi.Repository;
+using LoginCrudApi.SingalRHub;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
@@ -15,12 +17,16 @@ namespace WebApplication1.Controllers
     {
         private readonly IHomeRepository _repository;
         private readonly IConfiguration _config;
+        private readonly IHubContext<DashboardHub> _hubContext;
 
         public HomeController(IHomeRepository repository,
-                              IConfiguration config)
+                              IConfiguration config,
+                              IHubContext<DashboardHub>  hubContext
+        )
         {
             _repository = repository;
             _config = config;
+            _hubContext = hubContext;
         }
 
         [HttpPost("register")]
@@ -47,17 +53,15 @@ namespace WebApplication1.Controllers
                 new Claim(ClaimTypes.Name, model.Username)
             };
 
-            var key = new SymmetricSecurityKey(
-                Encoding.UTF8.GetBytes(_config["Jwt:Key"]));
+            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config["Jwt:Key"]));
 
-            var creds = new SigningCredentials(
-                key,
-                SecurityAlgorithms.HmacSha256);
+            var creds = new SigningCredentials(key,SecurityAlgorithms.HmacSha256);
 
             var token = new JwtSecurityToken(
                 claims: claims,
                 expires: DateTime.Now.AddHours(1),
-                signingCredentials: creds);
+                signingCredentials: creds
+            );
 
             return Ok(new
             {
@@ -65,7 +69,7 @@ namespace WebApplication1.Controllers
             });
         }
 
-        [Authorize]
+       // [Authorize]
         [HttpGet("getall")]
         public async Task<IActionResult> GetAll()
         {
@@ -95,14 +99,17 @@ namespace WebApplication1.Controllers
             return Ok(user);
         }
 
-        [Authorize]
+        //[Authorize]
         [HttpPost("create")]
         public async Task<IActionResult> Create(User user)
         {
             var result = await _repository.CreateAsync(user);
 
             if (result > 0)
+            {
+                await _hubContext.Clients.All.SendAsync("DashboardUpdated");
                 return Ok("User Created Successfully");
+            }
 
             return BadRequest("Insert Failed");
         }
@@ -114,7 +121,10 @@ namespace WebApplication1.Controllers
             var result = await _repository.UpdateAsync(user);
 
             if (result > 0)
+            {
+                await _hubContext.Clients.All.SendAsync("DashboardUpdated");
                 return Ok("Updated Successfully");
+            }
 
             return BadRequest("Update Failed");
         }
@@ -126,7 +136,10 @@ namespace WebApplication1.Controllers
             var result = await _repository.DeleteAsync(id);
 
             if (result > 0)
+            {
+                await _hubContext.Clients.All.SendAsync("DashboardUpdated");
                 return Ok("Deleted Successfully");
+            }
 
             return BadRequest("Delete Failed");
         }

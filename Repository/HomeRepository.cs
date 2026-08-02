@@ -28,7 +28,8 @@ namespace LoginCrudApi.Repository
                 new
                 {
                     model.Username,
-                    model.Password
+                    model.Password,
+                    model.FaceDescriptor
                 },
                 commandType: CommandType.StoredProcedure);
         }
@@ -37,7 +38,7 @@ namespace LoginCrudApi.Repository
         {
             using var con = GetConnection();
 
-            return await con.QueryFirstOrDefaultAsync(
+            return await con.QueryFirstOrDefaultAsync<LoginModel>(
                 "sp_Login",
                 new
                 {
