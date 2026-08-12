@@ -38,9 +38,9 @@ namespace LoginCrudApi.Repository
             parameters.Add("@Username", model.Username);
             parameters.Add("@Password", model.Password);
 
-
-            return await con.QueryFirstOrDefaultAsync<LoginModel>(
-                "sp_Login",parameters, commandType: CommandType.StoredProcedure);
+            var res = await con.QueryFirstOrDefaultAsync<LoginModel>("sp_Login", parameters, commandType: CommandType.StoredProcedure);
+             return res;
+            // return await con.QueryFirstOrDefaultAsync<LoginModel>( "sp_Login",parameters, commandType: CommandType.StoredProcedure);
         }
 
         public async Task<IEnumerable<User>> GetAllAsync()

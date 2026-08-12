@@ -30,6 +30,8 @@ namespace WebApplication1.Controllers
             _config = config;
             _hubContext = hubContext;
         }
+
+        [HttpPost("register")]
         public async Task<IActionResult> Register(LoginModel model)
         {
             var result = await _repository.RegisterAsync(model);
@@ -86,8 +88,12 @@ namespace WebApplication1.Controllers
         public async Task<IActionResult> GetAll()
         {
             var users = await _repository.GetAllAsync();
+            ApiResponse obj = new ApiResponse();
+            obj.Data = users;
+            obj.Success=true;
+            obj.HttpStatus = StatusCodes.Status200OK;
 
-            return Ok(users);
+            return Ok(obj);
         }
 
         //[Authorize]
