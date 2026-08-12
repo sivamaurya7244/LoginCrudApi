@@ -23,38 +23,31 @@ namespace LoginCrudApi.Repository
         {
             using var con = GetConnection();
 
-            return await con.ExecuteAsync(
-                "sp_Register",
-                new
-                {
-                    model.Username,
-                    model.Password,
-                    model.FaceDescriptor
-                },
-                commandType: CommandType.StoredProcedure);
+            DynamicParameters parameters = new DynamicParameters();
+            parameters.Add("@Username", model.Username);
+            parameters.Add("@Password", model.Password);
+            var res = await con.ExecuteAsync("sp_Register", parameters, commandType: CommandType.StoredProcedure);
+            return res;
+            //return await con.ExecuteAsync("sp_Register", parameters,commandType: CommandType.StoredProcedure);
         }
 
         public async Task<LoginModel?> LoginAsync(LoginModel model)
         {
             using var con = GetConnection();
+            DynamicParameters parameters = new DynamicParameters();
+            parameters.Add("@Username", model.Username);
+            parameters.Add("@Password", model.Password);
+
 
             return await con.QueryFirstOrDefaultAsync<LoginModel>(
-                "sp_Login",
-                new
-                {
-                    model.Username,
-                    model.Password
-                },
-                commandType: CommandType.StoredProcedure);
+                "sp_Login",parameters, commandType: CommandType.StoredProcedure);
         }
 
         public async Task<IEnumerable<User>> GetAllAsync()
         {
             using var con = GetConnection();
 
-            return await con.QueryAsync<User>(
-                "sp_GetAllUsers",
-                commandType: CommandType.StoredProcedure);
+            return await con.QueryAsync<User>("sp_GetAllUsers",commandType: CommandType.StoredProcedure);
         }
 
         public async Task<IEnumerable<User>> GetAllAsync(UserInputModel inputModel)

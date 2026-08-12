@@ -8,6 +8,8 @@ using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
+using System.Text.Json;
+
 
 namespace WebApplication1.Controllers
 {
@@ -28,16 +30,26 @@ namespace WebApplication1.Controllers
             _config = config;
             _hubContext = hubContext;
         }
-
-        [HttpPost("register")]
         public async Task<IActionResult> Register(LoginModel model)
         {
             var result = await _repository.RegisterAsync(model);
 
-            if (result > 0)
-                return Ok("Registered Successfully");
+            ApiResponse obj = new ApiResponse();
 
-            return BadRequest("Registration Failed");
+            if (result > 0)
+            {
+                obj.HttpStatus = StatusCodes.Status200OK;
+                obj.Data = "Registered Successfully";
+                obj.Success = true;
+
+                return Ok(obj);
+            }
+
+            obj.HttpStatus = StatusCodes.Status400BadRequest;
+            obj.Data = "Registration Failed";
+            obj.Success = false;
+
+            return BadRequest(obj);
         }
 
         [HttpPost("login")]
