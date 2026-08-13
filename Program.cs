@@ -1,5 +1,4 @@
 using LoginCrudApi.Repository;
-using LoginCrudApi.SingalRHub;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
@@ -11,7 +10,6 @@ var myAllowSpecificOrigins = "_myAllowSpecificOrigins";
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer(); // Required for endpoint discovery
 builder.Services.AddSwaggerGen(); // Registers the Swagger generator
-builder.Services.AddSignalR();
 
 builder.Services.AddScoped<IHomeRepository, HomeRepository>();
 
@@ -52,6 +50,5 @@ app.UseCors(myAllowSpecificOrigins);
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
-app.MapHub<DashboardHub>("/dashboardHub");
 
 app.Run();

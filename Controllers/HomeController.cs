@@ -1,14 +1,11 @@
 ﻿using LoginCrudApi.Models;
 using LoginCrudApi.Repository;
-using LoginCrudApi.SingalRHub;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.SignalR;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
-using System.Text.Json;
 
 
 namespace WebApplication1.Controllers
@@ -19,16 +16,11 @@ namespace WebApplication1.Controllers
     {
         private readonly IHomeRepository _repository;
         private readonly IConfiguration _config;
-        private readonly IHubContext<DashboardHub> _hubContext;
 
-        public HomeController(IHomeRepository repository,
-                              IConfiguration config,
-                              IHubContext<DashboardHub>  hubContext
-        )
+        public HomeController(IHomeRepository repository,IConfiguration config)
         {
             _repository = repository;
             _config = config;
-            _hubContext = hubContext;
         }
 
         [HttpPost("register")]
@@ -125,10 +117,8 @@ namespace WebApplication1.Controllers
 
             if (result > 0)
             {
-                await _hubContext.Clients.All.SendAsync("DashboardUpdated");
                 return Ok("User Created Successfully");
             }
-
             return BadRequest("Insert Failed");
         }
 
@@ -140,10 +130,8 @@ namespace WebApplication1.Controllers
 
             if (result > 0)
             {
-                await _hubContext.Clients.All.SendAsync("DashboardUpdated");
                 return Ok("Updated Successfully");
             }
-
             return BadRequest("Update Failed");
         }
 
@@ -155,10 +143,8 @@ namespace WebApplication1.Controllers
 
             if (result > 0)
             {
-                await _hubContext.Clients.All.SendAsync("DashboardUpdated");
                 return Ok("Deleted Successfully");
             }
-
             return BadRequest("Delete Failed");
         }
     }
