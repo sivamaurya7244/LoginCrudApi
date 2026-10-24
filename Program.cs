@@ -49,5 +49,5 @@ app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
 
-app.MapHub<DashboardHub>("/dashboardHub");
+//app.MapHub<DashboardHub>("/dashboardHub");
 app.Run();

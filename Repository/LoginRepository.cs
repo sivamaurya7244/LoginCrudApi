@@ -30,6 +30,17 @@ namespace LoginCrudApi.Repository
             return res;
         }
 
-        
+        public async Task<LoginModel?> LoginAsync(LoginModel model)
+        {
+            using var con = GetConnection();
+            DynamicParameters parameters = new DynamicParameters();
+            parameters.Add("@Username", model.Username);
+            parameters.Add("@Password", model.Password);
+
+            var res = await con.QueryFirstOrDefaultAsync<LoginModel>("sp_Login", parameters, commandType: CommandType.StoredProcedure);
+             return res;
+        }
+
+       
     }
 }
