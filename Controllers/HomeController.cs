@@ -1,4 +1,4 @@
-﻿using LoginCrudApi.Models;
+using LoginCrudApi.Models;
 using LoginCrudApi.Repository;
 using LoginCrudApi.SingalRHub;
 using Microsoft.AspNetCore.Authorization;
@@ -64,7 +64,8 @@ namespace WebApplication1.Controllers
 
             var claims = new List<Claim>
             {
-                new Claim(ClaimTypes.Name, model.Username)
+                new Claim(ClaimTypes.Name, model.Username),
+                new Claim(ClaimTypes.NameIdentifier, user.Id.ToString())
             };
 
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config["Jwt:Key"]));
@@ -163,3 +164,4 @@ namespace WebApplication1.Controllers
         }
     }
 }
+
