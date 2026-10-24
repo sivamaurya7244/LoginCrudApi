@@ -2,7 +2,7 @@
 
 namespace LoginCrudApi.Repository
 {
-    public interface IHomeRepository
+    public interface IloginRepository
     {
         Task<int> RegisterAsync(LoginModel model);
 

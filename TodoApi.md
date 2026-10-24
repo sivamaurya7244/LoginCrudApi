@@ -1,118 +1,315 @@
-# Todo API
+USE [LoginCrudDb]
+GO
+/****** Object:  StoredProcedure [dbo].[sp_UpdateUser]    Script Date: 24-10-2026 21:50:02 ******/
+DROP PROCEDURE [dbo].[sp_UpdateUser]
+GO
+/****** Object:  StoredProcedure [dbo].[sp_Todo_UpdateStatus]    Script Date: 24-10-2026 21:50:02 ******/
+DROP PROCEDURE [dbo].[sp_Todo_UpdateStatus]
+GO
+/****** Object:  StoredProcedure [dbo].[sp_Todo_Save]    Script Date: 24-10-2026 21:50:02 ******/
+DROP PROCEDURE [dbo].[sp_Todo_Save]
+GO
+/****** Object:  StoredProcedure [dbo].[sp_Todo_GetDashboardStats]    Script Date: 24-10-2026 21:50:02 ******/
+DROP PROCEDURE [dbo].[sp_Todo_GetDashboardStats]
+GO
+/****** Object:  StoredProcedure [dbo].[sp_Todo_GetById]    Script Date: 24-10-2026 21:50:02 ******/
+DROP PROCEDURE [dbo].[sp_Todo_GetById]
+GO
+/****** Object:  StoredProcedure [dbo].[sp_Todo_GetAll]    Script Date: 24-10-2026 21:50:02 ******/
+DROP PROCEDURE [dbo].[sp_Todo_GetAll]
+GO
+/****** Object:  StoredProcedure [dbo].[sp_Todo_Delete]    Script Date: 24-10-2026 21:50:02 ******/
+DROP PROCEDURE [dbo].[sp_Todo_Delete]
+GO
+/****** Object:  StoredProcedure [dbo].[sp_Register]    Script Date: 24-10-2026 21:50:02 ******/
+DROP PROCEDURE [dbo].[sp_Register]
+GO
+/****** Object:  StoredProcedure [dbo].[sp_Login]    Script Date: 24-10-2026 21:50:02 ******/
+DROP PROCEDURE [dbo].[sp_Login]
+GO
+ALTER TABLE [dbo].[Todos] DROP CONSTRAINT [CK_Todos_Status]
+GO
+ALTER TABLE [dbo].[Todos] DROP CONSTRAINT [CK_Todos_Priority]
+GO
+ALTER TABLE [dbo].[Todos] DROP CONSTRAINT [CK_Todos_Category]
+GO
+ALTER TABLE [dbo].[Todos] DROP CONSTRAINT [FK_Todos_UsersLogin]
+GO
+ALTER TABLE [dbo].[Todos] DROP CONSTRAINT [DF_Todos_CreatedAt]
+GO
+ALTER TABLE [dbo].[Todos] DROP CONSTRAINT [DF_Todos_Status]
+GO
+/****** Object:  Table [dbo].[UsersLogin]    Script Date: 24-10-2026 21:50:02 ******/
+IF  EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[UsersLogin]') AND type in (N'U'))
+DROP TABLE [dbo].[UsersLogin]
+GO
+/****** Object:  Table [dbo].[Todos]    Script Date: 24-10-2026 21:50:02 ******/
+IF  EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[Todos]') AND type in (N'U'))
+DROP TABLE [dbo].[Todos]
+GO
+/****** Object:  Table [dbo].[Todos]    Script Date: 24-10-2026 21:50:02 ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[Todos](
+	[Id] [int] IDENTITY(1,1) NOT NULL,
+	[UserId] [int] NOT NULL,
+	[Title] [nvarchar](200) NOT NULL,
+	[Description] [nvarchar](2000) NULL,
+	[Category] [nvarchar](20) NOT NULL,
+	[Priority] [nvarchar](10) NOT NULL,
+	[Status] [nvarchar](20) NOT NULL,
+	[CreatedAt] [datetime2](0) NOT NULL,
+ CONSTRAINT [PK_Todos] PRIMARY KEY CLUSTERED 
+(
+	[Id] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+) ON [PRIMARY]
+GO
+/****** Object:  Table [dbo].[UsersLogin]    Script Date: 24-10-2026 21:50:02 ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[UsersLogin](
+	[Id] [int] IDENTITY(1,1) NOT NULL,
+	[Username] [varchar](50) NULL,
+	[Password] [varchar](100) NULL,
+	[FaceDescriptor] [nvarchar](max) NULL,
+PRIMARY KEY CLUSTERED 
+(
+	[Id] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
+GO
+ALTER TABLE [dbo].[Todos] ADD  CONSTRAINT [DF_Todos_Status]  DEFAULT (N'Pending') FOR [Status]
+GO
+ALTER TABLE [dbo].[Todos] ADD  CONSTRAINT [DF_Todos_CreatedAt]  DEFAULT (sysutcdatetime()) FOR [CreatedAt]
+GO
+ALTER TABLE [dbo].[Todos]  WITH CHECK ADD  CONSTRAINT [FK_Todos_UsersLogin] FOREIGN KEY([UserId])
+REFERENCES [dbo].[UsersLogin] ([Id])
+GO
+ALTER TABLE [dbo].[Todos] CHECK CONSTRAINT [FK_Todos_UsersLogin]
+GO
+ALTER TABLE [dbo].[Todos]  WITH CHECK ADD  CONSTRAINT [CK_Todos_Category] CHECK  (([Category]=N'Personal' OR [Category]=N'Work'))
+GO
+ALTER TABLE [dbo].[Todos] CHECK CONSTRAINT [CK_Todos_Category]
+GO
+ALTER TABLE [dbo].[Todos]  WITH CHECK ADD  CONSTRAINT [CK_Todos_Priority] CHECK  (([Priority]=N'Low' OR [Priority]=N'Medium' OR [Priority]=N'High'))
+GO
+ALTER TABLE [dbo].[Todos] CHECK CONSTRAINT [CK_Todos_Priority]
+GO
+ALTER TABLE [dbo].[Todos]  WITH CHECK ADD  CONSTRAINT [CK_Todos_Status] CHECK  (([Status]=N'Completed' OR [Status]=N'Pending'))
+GO
+ALTER TABLE [dbo].[Todos] CHECK CONSTRAINT [CK_Todos_Status]
+GO
+/****** Object:  StoredProcedure [dbo].[sp_Login]    Script Date: 24-10-2026 21:50:02 ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
 
-The Todo module uses the existing JWT bearer authentication and common `ApiResponse` envelope. Send the token on every request:
 
-```http
-Authorization: Bearer <token>
-Content-Type: application/json
-```
+/* ================= LOGIN ================= */
+Create Proc [dbo].[sp_Login]
+    @Username Varchar(50),
+    @Password Varchar(100)
+As
+Begin
+    Select * 
+    From UsersLogin
+    Where Username=@Username And Password=@Password
+End
+GO
+/****** Object:  StoredProcedure [dbo].[sp_Register]    Script Date: 24-10-2026 21:50:02 ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+  
+  
+/* ================= REGISTER ================= */  
+CREATE Proc [dbo].[sp_Register]  
+    @Username Varchar(50),  
+    @Password Varchar(100)
+	--@FaceDescriptor VARCHAR(MAX) = NULL
+As  
+Begin  
+    Insert Into UsersLogin(Username,Password)  
+    Values(@Username,@Password)  
+End  
+GO
+/****** Object:  StoredProcedure [dbo].[sp_Todo_Delete]    Script Date: 24-10-2026 21:50:02 ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
 
-The backend build targets .NET 8 and uses the existing Dapper / SQL Server stored procedure pattern. `LoginCrudDb` was checked: `dbo.UsersLogin.Id` is `INT`, and no Todo table or procedures existed. [Database/TodoManagement.sql](Database/TodoManagement.sql) creates only the new Todo table and Todo procedures.
+CREATE   PROCEDURE [dbo].[sp_Todo_Delete]
+    @UserId INT,
+    @Id INT
+AS
+BEGIN
+    SET NOCOUNT ON;
+    DELETE dbo.Todos WHERE Id = @Id AND UserId = @UserId;
+    SELECT CONVERT(INT, @@ROWCOUNT);
+END;
 
-Success envelope:
+GO
+/****** Object:  StoredProcedure [dbo].[sp_Todo_GetAll]    Script Date: 24-10-2026 21:50:02 ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
 
-```json
-{ "data": {}, "success": true, "httpStatus": 200 }
-```
+CREATE   PROCEDURE [dbo].[sp_Todo_GetAll]
+    @UserId INT,
+    @Search NVARCHAR(2000) = NULL,
+    @Category NVARCHAR(20) = NULL,
+    @Priority NVARCHAR(10) = NULL,
+    @Status NVARCHAR(20) = NULL
+AS
+BEGIN
+    SET NOCOUNT ON;
+    SELECT Id, UserId, Title, Description, Category, Priority, Status, CreatedAt
+    FROM dbo.Todos
+    WHERE UserId = @UserId
+      AND (NULLIF(LTRIM(RTRIM(@Search)), N'') IS NULL
+           OR Title LIKE N'%' + @Search + N'%'
+           OR Description LIKE N'%' + @Search + N'%')
+      AND (@Category IS NULL OR Category = @Category)
+      AND (@Priority IS NULL OR Priority = @Priority)
+      AND (@Status IS NULL OR Status = @Status)
+    ORDER BY CreatedAt DESC, Id DESC;
+END;
 
-Errors use the same envelope with `success: false` and a message in `data`. Each Todo object contains `id`, `userId`, `title`, `description`, `category`, `priority`, `status`, and `createdAt`.
+GO
+/****** Object:  StoredProcedure [dbo].[sp_Todo_GetById]    Script Date: 24-10-2026 21:50:02 ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
 
-## Routes and examples
+CREATE   PROCEDURE [dbo].[sp_Todo_GetById]
+    @UserId INT,
+    @Id INT
+AS
+BEGIN
+    SET NOCOUNT ON;
+    SELECT Id, UserId, Title, Description, Category, Priority, Status, CreatedAt
+    FROM dbo.Todos WHERE Id = @Id AND UserId = @UserId;
+END;
 
-### List and filter: `GET /api/todo`
+GO
+/****** Object:  StoredProcedure [dbo].[sp_Todo_GetDashboardStats]    Script Date: 24-10-2026 21:50:02 ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
 
-Optional query parameters can be combined: `search`, `category` (`Work|Personal`), `priority` (`High|Medium|Low`), `status` (`Pending|Completed`). Empty or missing search text is ignored. The list is restricted to the current user.
+CREATE   PROCEDURE [dbo].[sp_Todo_GetDashboardStats]
+    @UserId INT
+AS
+BEGIN
+    SET NOCOUNT ON;
+    SELECT
+        COUNT(1) AS TotalTodos,
+        COALESCE(SUM(CASE WHEN Status = N'Completed' THEN 1 ELSE 0 END), 0) AS Completed,
+        COALESCE(SUM(CASE WHEN Status = N'Pending' THEN 1 ELSE 0 END), 0) AS Pending,
+        COALESCE(SUM(CASE WHEN Status = N'Pending' AND Priority = N'High' THEN 1 ELSE 0 END), 0) AS HighPriority
+    FROM dbo.Todos
+    WHERE UserId = @UserId;
+END;
 
-Example: `GET /api/todo?search=project&category=Work&priority=High&status=Pending`
+GO
+/****** Object:  StoredProcedure [dbo].[sp_Todo_Save]    Script Date: 24-10-2026 21:50:02 ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
 
-```json
-{ "data": [{ "id": 12, "userId": 4, "title": "Finish project documentation", "description": "Complete the technical documentation.", "category": "Work", "priority": "High", "status": "Pending", "createdAt": "2026-10-24T14:00:00" }], "success": true, "httpStatus": 200 }
-```
 
-### Get one: `GET /api/todo/{id}`
 
-Example: `GET /api/todo/12`
+CREATE   PROCEDURE [dbo].[sp_Todo_Save]
+    @Id INT = 0,
+    @UserId INT,
+    @Title NVARCHAR(200),
+    @Description NVARCHAR(2000) = NULL,
+    @Category NVARCHAR(20),
+    @Priority NVARCHAR(10)
+AS
+BEGIN
+    SET NOCOUNT ON;
 
-```json
-{ "data": { "id": 12, "userId": 4, "title": "Finish project documentation", "description": "Complete the technical documentation.", "category": "Work", "priority": "High", "status": "Pending", "createdAt": "2026-10-24T14:00:00" }, "success": true, "httpStatus": 200 }
-```
+    IF ISNULL(@Id, 0) <= 0
+    BEGIN
+        INSERT INTO dbo.Todos
+            (UserId, Title, Description, Category, Priority)
+        VALUES
+            (@UserId, @Title, @Description, @Category, @Priority);
 
-Returns 404 if the todo does not exist or belongs to another user.
+        SET @Id = CONVERT(INT, SCOPE_IDENTITY());
+    END
+    ELSE
+    BEGIN
+        UPDATE dbo.Todos
+        SET Title = @Title,
+            Description = @Description,
+            Category = @Category,
+            Priority = @Priority
+        WHERE Id = @Id AND UserId = @UserId;
 
-### Create: `POST /api/todo`
+        IF @@ROWCOUNT = 0
+            RETURN;
+    END;
 
-Request:
+    SELECT Id, UserId, Title, Description, Category,
+           Priority, Status, CreatedAt
+    FROM dbo.Todos
+    WHERE Id = @Id AND UserId = @UserId;
+END;
+GO
+/****** Object:  StoredProcedure [dbo].[sp_Todo_UpdateStatus]    Script Date: 24-10-2026 21:50:02 ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
 
-```json
-{ "title": "Finish project documentation", "description": "Complete the technical documentation.", "category": "Work", "priority": "High" }
-```
+CREATE   PROCEDURE [dbo].[sp_Todo_UpdateStatus]
+    @UserId INT,
+    @Id INT,
+    @Status NVARCHAR(20)
+AS
+BEGIN
+    SET NOCOUNT ON;
+    UPDATE dbo.Todos SET Status = @Status WHERE Id = @Id AND UserId = @UserId;
 
-Response: HTTP 201. New todos start Pending.
+    IF @@ROWCOUNT = 1
+        SELECT Id, UserId, Title, Description, Category, Priority, Status, CreatedAt
+        FROM dbo.Todos WHERE Id = @Id AND UserId = @UserId;
+END;
 
-```json
-{ "data": { "id": 12, "userId": 4, "title": "Finish project documentation", "description": "Complete the technical documentation.", "category": "Work", "priority": "High", "status": "Pending", "createdAt": "2026-10-24T14:00:00" }, "success": true, "httpStatus": 201 }
-```
+GO
+/****** Object:  StoredProcedure [dbo].[sp_UpdateUser]    Script Date: 24-10-2026 21:50:02 ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
 
-### Update: `PUT /api/todo/{id}`
 
-Request:
-
-```json
-{ "title": "Finish final documentation", "description": "Ready for review.", "category": "Work", "priority": "Medium" }
-```
-
-Response: HTTP 200 with the changed todo in `data`.
-
-```json
-{ "data": { "id": 12, "userId": 4, "title": "Finish final documentation", "description": "Ready for review.", "category": "Work", "priority": "Medium", "status": "Pending", "createdAt": "2026-10-24T14:00:00" }, "success": true, "httpStatus": 200 }
-```
-
-Returns 404 for a missing todo or one owned by another user.
-
-### Change checkbox status: `PATCH /api/todo/{id}/status`
-
-Request:
-
-```json
-{ "status": "Completed" }
-```
-
-Response:
-
-```json
-{ "data": { "id": 12, "userId": 4, "title": "Finish final documentation", "description": "Ready for review.", "category": "Work", "priority": "Medium", "status": "Completed", "createdAt": "2026-10-24T14:00:00" }, "success": true, "httpStatus": 200 }
-```
-
-### Delete: `DELETE /api/todo/{id}`
-
-Response:
-
-```json
-{ "data": "Todo deleted.", "success": true, "httpStatus": 200 }
-```
-
-Returns 404 when the item is unavailable to the current user; success is reported only when a row was deleted.
-
-### Dashboard: `GET /api/todo/dashboard-stats`
-
-This counts the user's full collection, regardless of list filters. High Priority means Pending todos with High priority.
-
-```json
-{ "data": { "totalTodos": 12, "completed": 6, "pending": 6, "highPriority": 3 }, "success": true, "httpStatus": 200 }
-```
-
-## Existing UI integration
-
-Keep the TodoPro page and its components. Use `GET /api/todo` for the table and search/category/priority/status filters; `GET /api/todo/dashboard-stats` for the four cards; `POST` for New Todo; `PUT` for edit; `PATCH /{id}/status` for the checkbox; and `DELETE` for the trash action.
-
-The API allows browser origins `http://localhost:5173` and `http://localhost:4200`. Example:
-
-```ts
-const response = await fetch("http://localhost:5163/api/todo?category=Work", {
-  headers: { Authorization: `Bearer ${token}` }
-});
-const result = await response.json();
-const todos = result.data;
-```
-
-The screenshot's TodoPro source was not present in the available project folders, so I left its frontend components untouched. Sign in again to get a token with the new user ID claim.
+/* ================= UPDATE USER ================= */
+Create Proc [dbo].[sp_UpdateUser]
+    @Id Int,
+    @Name Varchar(100),
+    @Email Varchar(100),
+    @Salary Decimal(10,2)
+As
+Begin
+    Update Users
+    Set Name=@Name,
+        Email=@Email,
+        Salary=@Salary
+    Where Id=@Id
+End
+GO

@@ -13,7 +13,7 @@ builder.Services.AddSwaggerGen(); // Registers the Swagger generator
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddSignalR();
-builder.Services.AddScoped<IHomeRepository, HomeRepository>();
+builder.Services.AddScoped<IloginRepository, LoginRepository>();
 builder.Services.AddScoped<ITodoRepository, TodoRepository>();
 
 builder.Services.AddCors(options =>
