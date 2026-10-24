@@ -28,7 +28,6 @@ namespace LoginCrudApi.Repository
             parameters.Add("@Password", model.Password);
             var res = await con.ExecuteAsync("sp_Register", parameters, commandType: CommandType.StoredProcedure);
             return res;
-            //return await con.ExecuteAsync("sp_Register", parameters,commandType: CommandType.StoredProcedure);
         }
 
         public async Task<LoginModel?> LoginAsync(LoginModel model)
@@ -40,13 +39,11 @@ namespace LoginCrudApi.Repository
 
             var res = await con.QueryFirstOrDefaultAsync<LoginModel>("sp_Login", parameters, commandType: CommandType.StoredProcedure);
              return res;
-            // return await con.QueryFirstOrDefaultAsync<LoginModel>( "sp_Login",parameters, commandType: CommandType.StoredProcedure);
         }
 
         public async Task<IEnumerable<User>> GetAllAsync()
         {
             using var con = GetConnection();
-
             return await con.QueryAsync<User>("sp_GetAllUsers",commandType: CommandType.StoredProcedure);
         }
 
@@ -58,68 +55,48 @@ namespace LoginCrudApi.Repository
 
             parameters.Add("@PageNumber", inputModel.pageNumber, DbType.Int32);
             parameters.Add("@PageSize", inputModel.pageSize, DbType.Int32);
-
-            return await con.QueryAsync<User>(
-                "sp_GetAllUsersWithpagination",
-                parameters,
-                commandType: CommandType.StoredProcedure);
+            return await con.QueryAsync<User>("sp_GetAllUsersWithpagination",parameters,commandType: CommandType.StoredProcedure);
         }
 
         public async Task<User?> GetByIdAsync(int id)
         {
             using var con = GetConnection();
 
-            return await con.QueryFirstOrDefaultAsync<User>(
-                "sp_GetUserById",
-                new
-                {
-                    Id = id
-                },
-                commandType: CommandType.StoredProcedure);
+            return await con.QueryFirstOrDefaultAsync<User>("sp_GetUserById",
+                new{Id = id},commandType: CommandType.StoredProcedure);
         }
 
         public async Task<int> CreateAsync(User user)
         {
             using var con = GetConnection();
-
-            return await con.ExecuteAsync(
-                "sp_CreateUser",
-                new
-                {
-                    user.Name,
-                    user.Email,
-                    user.Salary
-                },
-                commandType: CommandType.StoredProcedure);
+            DynamicParameters parameters = new DynamicParameters();
+            parameters.Add("@Name", user.Name);
+            parameters.Add("@Email", user.Email);
+            parameters.Add("@Salary", user.Salary);
+            var data = await con.ExecuteAsync("sp_CreateUser",parameters,commandType: CommandType.StoredProcedure);
+            return data;
         }
 
         public async Task<int> UpdateAsync(User user)
         {
             using var con = GetConnection();
+            DynamicParameters parameters = new DynamicParameters();
+            parameters.Add("@Id", user.Id);
+            parameters.Add("@Name", user.Name);
+            parameters.Add("@Email", user.Email);
+            parameters.Add("@Salary", user.Salary);
 
-            return await con.ExecuteAsync(
-                "sp_UpdateUser",
-                new
-                {
-                    user.Id,
-                    user.Name,
-                    user.Email,
-                    user.Salary
-                },
-                commandType: CommandType.StoredProcedure);
+
+            var data = await con.ExecuteAsync("sp_UpdateUser",parameters,commandType: CommandType.StoredProcedure);
+            return data;
         }
 
         public async Task<int> DeleteAsync(int id)
         {
             using var con = GetConnection();
 
-            return await con.ExecuteAsync(
-                "sp_DeleteUser",
-                new
-                {
-                    Id = id
-                },
-                commandType: CommandType.StoredProcedure);
+            var data = await con.ExecuteAsync("sp_DeleteUser",new{Id = id},commandType: CommandType.StoredProcedure);
+            return data;
         }
     }
 }
